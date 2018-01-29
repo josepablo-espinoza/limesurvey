@@ -1,0 +1,47 @@
+version: '2'
+
+services:
+  limedb:
+    image: mysql:5.7
+    restart: unless-stopped
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.scheduler.affinity:host_label: environment=production,back=true,limesurvey=true
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpwd
+      MYSQL_DATABASE: limesurvey
+      MYSQL_USER: limesurvey
+      MYSQL_PASSWORD: limesurveypwd
+
+  limeapp:
+    depends_on:
+      - limedb
+    image: lime:latest
+    restart: unless-stopped
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.scheduler.affinity:host_label: environment=production,middle=true,limesurvey=true
+    volumes:
+      - www_data:/var/www
+      - fpm_sock:/var/run/php
+
+  limefront:
+    depends_on:
+      - limeapp
+    image: amontaigu/nginx:1.13.6
+    restart: unless-stopped
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.scheduler.affinity:host_label: environment=production,front=true,limesurvey=true
+    ports:
+      - "80:80"
+    volumes:
+      - www_data:/var/www
+      - fpm_sock:/var/run/php
+
+volumes:
+  db_data:
+  www_data:
+  fpm_sock:
