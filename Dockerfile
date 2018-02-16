@@ -18,12 +18,19 @@ RUN buildDeps=" \
         libjpeg-dev \
         libpng-dev \
         libxml2-dev \
+        libmcrypt-dev \
+        libldap2-dev \
+        zlib1g-dev \
+        libtidy-dev \
+        
     " \
     && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y $buildDeps $runtimeDeps \
     && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
-    && docker-php-ext-install bcmath calendar iconv intl mbstring mysqli opcache pdo_mysql soap zip imap \
-    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
-    && docker-php-ext-install gd \
+    && docker-php-ext-install -j$(nproc) bcmath calendar iconv intl mbstring mysqli opcache pdo pdo_mysql soap zip imap tidy\
+    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-png-dir=/usr --with-jpeg-dir=/usr \
+    && docker-php-ext-install -j$(nproc) gd \
+    && pecl install mcrypt-1.0.1 \
+    && docker-php-ext-enable mcrypt \
     && apt-get purge -y --auto-remove $buildDeps \
     && rm -r /var/lib/apt/lists/* \
     && a2enmod rewrite \
